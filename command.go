@@ -1,13 +1,14 @@
 package eventsourcing
 
 import (
+	"eventsourcing/item"
 	"time"
 )
 
 type ItemCommander struct {
 }
 
-func (c *ItemCommander) apply(eventCh <-chan ItemEvent) error {
+func (c *ItemCommander) apply(eventCh <-chan item.Event) error {
 	for {
 		select {
 		case <-eventCh:
