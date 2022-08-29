@@ -23,6 +23,7 @@ type Command interface {
 	BurningItemSuccess(*Event) *State
 }
 
+// Status | Item State 가 가지는 상태 값
 type Status string
 
 const (
@@ -36,17 +37,27 @@ const (
 	Burned    = Status("burned")
 )
 
+// Partition | State 는 Partition interface 를 구현한다. 즉, State 는 Partition key 를 꼭 가지고 있어야 한다는 의미
+type Partition interface {
+	PartitionKey() PartitionKey
+}
+
+// State | Item Domain 의 State, Command interface 를 구현하여 replay 할 수 있게 만든다.
 type State struct {
-	AssetKey      string      `json:"assetKey"`
-	Status        Status      `json:"status"`
-	Owner         Owner       `json:"owner"`
-	OnchainLink   OnchainLink `json:"onchainLink"`
-	Data          Data        `json:"data"`
-	Lock          bool        `json:"lock"`
-	CreatedAt     time.Time   `json:"createdAt"`
-	LastEventAt   time.Time   `json:"lastEventAt"`
-	LastEventId   string      `json:"lastEventId"`
-	LastEventName EventName   `json:"lastEventName"`
+	AssetKey      PartitionKey `json:"assetKey"`
+	Status        Status       `json:"status"`
+	Owner         Owner        `json:"owner"`
+	OnchainLink   OnchainLink  `json:"onchainLink"`
+	Data          Data         `json:"data"`
+	Lock          bool         `json:"lock"`
+	CreatedAt     time.Time    `json:"createdAt"`
+	LastEventAt   time.Time    `json:"lastEventAt"`
+	LastEventId   EventId      `json:"lastEventId"`   // 현 State 가 만들어진 마지막 EventId
+	LastEventName EventName    `json:"lastEventName"` // 현 STate 가 만들어진 마지막 EventName
+}
+
+func (i *State) PartitionKey() PartitionKey {
+	return i.AssetKey
 }
 
 func (i *State) String() string {
@@ -62,7 +73,7 @@ func (i *State) String() string {
 
 func (i *State) CreateItem(event *Event) *State {
 	return &State{
-		AssetKey:    string(event.PartitionKey),
+		AssetKey:    event.PartitionKey,
 		Status:      Created,
 		Owner:       *event.Requests.GetItemOwner(),
 		OnchainLink: *event.Requests.GetItemOnchainLink(),

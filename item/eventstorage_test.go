@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	mockStorage = NewMockEventStorage()
-	assetKey    = xid.New().String()
+	mockStorage  = NewMockEventStorage()
+	partitionKey = PartitionKey(xid.New().String())
 )
 
 func TestMockEventStorage(t *testing.T) {
@@ -23,8 +23,8 @@ func TestMockEventStorage(t *testing.T) {
 	req.SetReq(&Data{
 		Data: "data",
 	})
-	event := NewEvent(CreateItemEvent, "v1", assetKey, req)
-	err := mockStorage.SetEvent(*event)
+	event := NewEvent(CreateItemEvent, "v1", partitionKey, req)
+	err := mockStorage.SetEvent(event)
 	if err != nil {
 		t.Error(err)
 	}
@@ -38,13 +38,13 @@ func TestMockEventStorage(t *testing.T) {
 	t.Log(getEvent)
 
 	// set another event
-	saveEvent := NewEvent(SaveItemDataEvent, "v1", assetKey, NewRequests(&Data{Data: "data"}))
-	err = mockStorage.SetEvent(*saveEvent)
+	saveEvent := NewEvent(SaveItemDataEvent, "v1", partitionKey, NewRequests(&Data{Data: "data"}))
+	err = mockStorage.SetEvent(saveEvent)
 	if err != nil {
 		t.Error(err)
 	}
-	mintingReqEvent := NewEvent(MintingItemRequestEvent, "v1", assetKey, nil)
-	err = mockStorage.SetEvent(*mintingReqEvent)
+	mintingReqEvent := NewEvent(MintingItemRequestEvent, "v1", partitionKey, nil)
+	err = mockStorage.SetEvent(mintingReqEvent)
 	if err != nil {
 		t.Error(err)
 	}

@@ -20,10 +20,10 @@ func TestNewItemEvent(t *testing.T) {
 	req.SetReq(&Data{
 		Data: "data",
 	})
-	event := NewEvent(CreateItemEvent, "v1", assetKey, req)
-	json, err := json.Marshal(event)
+	event := NewEvent(CreateItemEvent, "v1", PartitionKey(assetKey), req)
+	bytes, err := json.Marshal(event)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(string(json))
+	t.Log(string(bytes))
 }

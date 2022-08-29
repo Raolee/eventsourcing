@@ -9,7 +9,7 @@ func TestCommand(t *testing.T) {
 	createCommand := Command.CreateItem
 
 	state := &State{}
-	assetKey := xid.New().String()
+	assetKey := PartitionKey(xid.New().String())
 	req := NewRequests(nil)
 	req.SetReq(&Owner{
 		OwnerKey: "raol",
