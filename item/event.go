@@ -10,58 +10,78 @@ import (
 type EventName string
 
 const (
-	CreateItemEvent           = EventName("createItem")
-	SaveItemDataEvent         = EventName("saveItemData")
-	RemoveItemEvent           = EventName("removeItem")
-	MintingItemRequestEvent   = EventName("mintingItemRequest")
-	MintingItemFailureEvent   = EventName("mintingItemFailure")
-	MintingItemSuccessEvent   = EventName("mintingItemSuccess")
-	RegisterMarketItemEvent   = EventName("registerMarketItem")
-	CancelTradingItemEvent    = EventName("cancelTradingItem")
-	ChangeItemOwnerEvent      = EventName("successTradingItem")
-	EnhancingItemRequestEvent = EventName("enhancingItemRequest")
-	EnhancingItemFailureEvent = EventName("enhancingItemFailure")
-	EnhancingItemSuccessEvent = EventName("enhancingItemSuccess")
-	BurningItemRequestEvent   = EventName("burningItemRequest")
-	BurningItemFailureEvent   = EventName("burningItemFailure")
-	BurningItemSuccessEvent   = EventName("burningItemSuccess")
+	CreateItemEvent   = EventName("createItem")
+	SaveItemDataEvent = EventName("saveItemData")
+	RemoveItemEvent   = EventName("removeItem")
+
+	RequestMintingItemEvent = EventName("requestMintingItem")
+	FailedMintingItemEvent  = EventName("failedMintingItem")
+	SuccessMintingItemEvent = EventName("successMintingItem")
+
+	RegisterMarketItemEvent = EventName("registerItemToMarket")
+	CancelTradingItemEvent  = EventName("cancelTradingItem")
+
+	ChangeItemOwnerEvent      = EventName("changeItemOwner")
+	ChangeCharacterOwnerEvent = EventName("changeCharOwner")
+
+	RequestEnhanceItemEvent = EventName("requestEnhanceItem")
+	FailedEnhanceItemEvent  = EventName("failedEnhanceItem")
+	SuccessEnhanceItemEvent = EventName("successEnhanceItem")
+
+	BindItemToCharEvent        = EventName("bindItemToChar")
+	FailedBindItemToCharEvent  = EventName("failedBindItemToChar")
+	SuccessBindItemToCharEvent = EventName("successBindItemToChar")
+
+	RequestBindItemToCatalogEvent = EventName("bindItemToCatalog")
+	FailedBindItemToCatalogEvent  = EventName("failedBindItemToCatalog")
+	SuccessBindItemToCatalogEvent = EventName("successBindItemToCatalog")
+
+	RequestBurnItemEvent = EventName("requestBurnItem")
+	FailedBurnItemEvent  = EventName("failedBurnItem")
+	SuccessBurnItemEvent = EventName("successBurnItem")
 )
 
 var (
 	// EventCommandMap | EventName 과 Command 를 연결
 	EventCommandMap = map[EventName]func(command Command, event *Event) *State{
-		CreateItemEvent:           Command.CreateItem,
-		SaveItemDataEvent:         Command.SaveItemData,
-		RemoveItemEvent:           Command.RemoveItem,
-		MintingItemRequestEvent:   Command.MintingItemRequest,
-		MintingItemFailureEvent:   Command.MintingItemFailure,
-		MintingItemSuccessEvent:   Command.MintingItemSuccess,
-		RegisterMarketItemEvent:   Command.RegisterMarketItem,
-		CancelTradingItemEvent:    Command.CancelMarketItem,
-		ChangeItemOwnerEvent:      Command.ChangeItemOwner,
-		EnhancingItemRequestEvent: Command.EnhancingItemRequest,
-		EnhancingItemFailureEvent: Command.EnhancingItemFailure,
-		EnhancingItemSuccessEvent: Command.EnhancingItemSuccess,
-		BurningItemRequestEvent:   Command.BurningItemRequest,
-		BurningItemFailureEvent:   Command.BurningItemFailure,
-		BurningItemSuccessEvent:   Command.BurningItemSuccess,
+		CreateItemEvent:               Command.CreateItem,
+		SaveItemDataEvent:             Command.SaveItemData,
+		RemoveItemEvent:               Command.RemoveItem,
+		RequestMintingItemEvent:       Command.ApplyRequestMintingItem,
+		FailedMintingItemEvent:        Command.ApplyFailedMintingItem,
+		SuccessMintingItemEvent:       Command.ApplySuccessMintingItem,
+		RegisterMarketItemEvent:       Command.RegisterMarketItem,
+		CancelTradingItemEvent:        Command.CancelMarketItem,
+		ChangeItemOwnerEvent:          Command.ChangeItemOwner,
+		RequestEnhanceItemEvent:       Command.ApplyRequestEnhanceItem,
+		FailedEnhanceItemEvent:        Command.ApplyFailedEnhanceItem,
+		SuccessEnhanceItemEvent:       Command.ApplySuccessEnhanceItem,
+		BindItemToCharEvent:           Command.ApplyRequestBindItemToCharacter,
+		FailedBindItemToCharEvent:     Command.ApplyFailedBindItemToCharacter,
+		SuccessBindItemToCharEvent:    Command.ApplySuccessBindItemToCharacter,
+		RequestBindItemToCatalogEvent: Command.ApplyRequestBindItemToCatalog,
+		FailedBindItemToCatalogEvent:  Command.ApplyFailedBindItemToCatalog,
+		SuccessBindItemToCatalogEvent: Command.ApplySuccessBindItemToCatalog,
+		RequestBurnItemEvent:          Command.ApplyRequestBurnItem,
+		FailedBurnItemEvent:           Command.ApplyFailedBurnItem,
+		SuccessBurnItemEvent:          Command.ApplySuccessBurnItem,
 	}
 	EventValidatorMap = map[EventName]func(validate Validate, event *Event) (bool, error){
-		CreateItemEvent:           Validate.ValidateCreateItem,
-		SaveItemDataEvent:         Validate.ValidateSaveItemData,
-		RemoveItemEvent:           Validate.ValidateRemoveItem,
-		MintingItemRequestEvent:   Validate.ValidateMintingItemRequest,
-		MintingItemFailureEvent:   Validate.ValidateMintingItemFailure,
-		MintingItemSuccessEvent:   Validate.ValidateMintingItemSuccess,
-		RegisterMarketItemEvent:   Validate.ValidateRegisterMarketItem,
-		CancelTradingItemEvent:    Validate.ValidateCancelMarketItem,
-		ChangeItemOwnerEvent:      Validate.ValidateChangeItemOwner,
-		EnhancingItemRequestEvent: Validate.ValidateEnhancingItemRequest,
-		EnhancingItemFailureEvent: Validate.ValidateEnhancingItemFailure,
-		EnhancingItemSuccessEvent: Validate.ValidateEnhancingItemSuccess,
-		BurningItemRequestEvent:   Validate.ValidateBurningItemRequest,
-		BurningItemFailureEvent:   Validate.ValidateBurningItemFailure,
-		BurningItemSuccessEvent:   Validate.ValidateBurningItemSuccess,
+		CreateItemEvent:         Validate.ValidateCreateItem,
+		SaveItemDataEvent:       Validate.ValidateSaveItemData,
+		RemoveItemEvent:         Validate.ValidateRemoveItem,
+		RequestMintingItemEvent: Validate.ValidateMintingItemRequest,
+		FailedMintingItemEvent:  Validate.ValidateMintingItemFailure,
+		SuccessMintingItemEvent: Validate.ValidateMintingItemSuccess,
+		RegisterMarketItemEvent: Validate.ValidateRegisterMarketItem,
+		CancelTradingItemEvent:  Validate.ValidateCancelMarketItem,
+		ChangeItemOwnerEvent:    Validate.ValidateChangeItemOwner,
+		RequestEnhanceItemEvent: Validate.ValidateEnhanceItemRequest,
+		FailedEnhanceItemEvent:  Validate.ValidateEnhanceItemFailure,
+		SuccessEnhanceItemEvent: Validate.ValidateEnhanceItemSuccess,
+		RequestBurnItemEvent:    Validate.ValidateBurnItemRequest,
+		FailedBurnItemEvent:     Validate.ValidateBurnItemFailure,
+		SuccessBurnItemEvent:    Validate.ValidateBurnItemSuccess,
 	}
 )
 
@@ -127,83 +147,4 @@ func (e EventList) Iterate() <-chan *Event {
 		close(ch)
 	}()
 	return ch
-}
-
-// PartitionKey | string 을 type 으로 재정의 했다. 명시적으로 보이고, 추가 func 을 더 붙일 수 있기 때문임
-type PartitionKey string
-
-// RequestBody | Item 도메인의 Request Body, 계속 추가 될 수 있다.
-type RequestBody struct {
-	*Owner
-	*OnchainLink
-	*Data
-}
-
-func NewRequests(req BodyModel) *RequestBody {
-	if req == nil {
-		return &RequestBody{}
-	}
-	rb := &RequestBody{}
-	rb.SetReq(req)
-	return rb
-}
-func (i *RequestBody) SetReq(req BodyModel) {
-	switch req.(type) {
-	case *Owner:
-		i.Owner = req.(*Owner)
-	case *OnchainLink:
-		i.OnchainLink = req.(*OnchainLink)
-	case *Data:
-		i.Data = req.(*Data)
-	}
-}
-func (i *RequestBody) GetItemOwner() *Owner {
-	if i == nil || i.Owner == nil {
-		return nil
-	}
-	return i.Owner
-}
-func (i *RequestBody) GetItemOnchainLink() *OnchainLink {
-	if i == nil || i.OnchainLink == nil {
-		return nil
-	}
-	return i.OnchainLink
-}
-func (i *RequestBody) GetItemData() *Data {
-	if i == nil || i.Data == nil {
-		return nil
-	}
-	return i.Data
-}
-
-// BodyModel | Item RequestBody 를 하나의 type 으로 받기 위해 Trick 을 사용, 이 interface 는 아무런 액션도 하지 않음
-type BodyModel interface {
-	bodyModel()
-}
-
-type Owner struct {
-	OwnerKey string `json:"ownerKey"`
-}
-
-// bodyModel interface 를 구현했기에, RequestBody 에 다같이 들어갈 수 있는 것
-func (i *Owner) bodyModel() {
-	return
-}
-
-type OnchainLink struct {
-	TokenId      string `json:"tokenId"`
-	MintingNo    string `json:"mintingNo"`
-	ContractAddr string `json:"contractAddr"`
-}
-
-func (i *OnchainLink) bodyModel() {
-	return
-}
-
-type Data struct {
-	Data string `json:"data"`
-}
-
-func (i *Data) bodyModel() {
-	return
 }

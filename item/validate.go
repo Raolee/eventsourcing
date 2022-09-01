@@ -10,12 +10,12 @@ type Validate interface {
 	ValidateRegisterMarketItem(*Event) (bool, error)
 	ValidateCancelMarketItem(*Event) (bool, error)
 	ValidateChangeItemOwner(*Event) (bool, error)
-	ValidateEnhancingItemRequest(*Event) (bool, error)
-	ValidateEnhancingItemFailure(*Event) (bool, error)
-	ValidateEnhancingItemSuccess(*Event) (bool, error)
-	ValidateBurningItemRequest(*Event) (bool, error)
-	ValidateBurningItemFailure(*Event) (bool, error)
-	ValidateBurningItemSuccess(*Event) (bool, error)
+	ValidateEnhanceItemRequest(*Event) (bool, error)
+	ValidateEnhanceItemFailure(*Event) (bool, error)
+	ValidateEnhanceItemSuccess(*Event) (bool, error)
+	ValidateBurnItemRequest(*Event) (bool, error)
+	ValidateBurnItemFailure(*Event) (bool, error)
+	ValidateBurnItemSuccess(*Event) (bool, error)
 }
 
 type MockValidator struct {
@@ -75,32 +75,32 @@ func (m *MockValidator) ValidateChangeItemOwner(event *Event) (bool, error) {
 	panic("implement me")
 }
 
-func (m *MockValidator) ValidateEnhancingItemRequest(event *Event) (bool, error) {
+func (m *MockValidator) ValidateEnhanceItemRequest(event *Event) (bool, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *MockValidator) ValidateEnhancingItemFailure(event *Event) (bool, error) {
+func (m *MockValidator) ValidateEnhanceItemFailure(event *Event) (bool, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *MockValidator) ValidateEnhancingItemSuccess(event *Event) (bool, error) {
+func (m *MockValidator) ValidateEnhanceItemSuccess(event *Event) (bool, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *MockValidator) ValidateBurningItemRequest(event *Event) (bool, error) {
+func (m *MockValidator) ValidateBurnItemRequest(event *Event) (bool, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *MockValidator) ValidateBurningItemFailure(event *Event) (bool, error) {
+func (m *MockValidator) ValidateBurnItemFailure(event *Event) (bool, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *MockValidator) ValidateBurningItemSuccess(event *Event) (bool, error) {
+func (m *MockValidator) ValidateBurnItemSuccess(event *Event) (bool, error) {
 	//TODO implement me
 	panic("implement me")
 }

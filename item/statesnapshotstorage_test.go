@@ -22,7 +22,7 @@ func TestNewMockStateSnapshotStorage(t *testing.T) {
 	t.Log(lastEvent)
 
 	event := NewEvent(ChangeItemOwnerEvent, "v1", partitionKey, NewRequests(&Owner{
-		OwnerKey: "raol2",
+		AccountKey: "raol2",
 	}))
 	err = storage.UpdateSnapshot(event)
 	if err != nil {

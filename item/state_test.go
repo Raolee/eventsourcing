@@ -12,12 +12,14 @@ func TestCommand(t *testing.T) {
 	assetKey := PartitionKey(xid.New().String())
 	req := NewRequests(nil)
 	req.SetReq(&Owner{
-		OwnerKey: "raol",
+		AccountKey: "raol",
 	})
-	req.SetReq(&OnchainLink{
-		TokenId:      "token",
-		MintingNo:    "00000001",
-		ContractAddr: "contractAddr",
+	req.SetReq(&ItemOnchainLink{
+		ERC721Contract: &ERC721Contract{
+			ContractAddr: "contractAddr",
+			TokenId:      "token",
+		},
+		MintingNo: "00000001",
 	})
 	req.SetReq(&Data{
 		Data: "data",

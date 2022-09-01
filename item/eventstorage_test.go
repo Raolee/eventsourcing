@@ -13,12 +13,14 @@ var (
 func TestMockEventStorage(t *testing.T) {
 	req := NewRequests(nil)
 	req.SetReq(&Owner{
-		OwnerKey: "raol",
+		AccountKey: "raol",
 	})
-	req.SetReq(&OnchainLink{
-		TokenId:      "token",
-		MintingNo:    "00000001",
-		ContractAddr: "contractAddr",
+	req.SetReq(&ItemOnchainLink{
+		ERC721Contract: &ERC721Contract{
+			ContractAddr: "contractAddr",
+			TokenId:      "token",
+		},
+		MintingNo: "00000001",
 	})
 	req.SetReq(&Data{
 		Data: "data",
@@ -43,7 +45,7 @@ func TestMockEventStorage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	mintingReqEvent := NewEvent(MintingItemRequestEvent, "v1", partitionKey, nil)
+	mintingReqEvent := NewEvent(RequestMintingItemEvent, "v1", partitionKey, nil)
 	err = mockStorage.SetEvent(mintingReqEvent)
 	if err != nil {
 		t.Error(err)
