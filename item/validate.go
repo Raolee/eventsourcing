@@ -1,5 +1,7 @@
 package item
 
+import "eventsourcing/item/storage"
+
 type Validate interface {
 	ValidateCreateItem(*Event) (bool, error)
 	ValidateSaveItemData(*Event) (bool, error)
@@ -19,11 +21,11 @@ type Validate interface {
 }
 
 type MockValidator struct {
-	EventStorage
-	StateSnapshotStorage
+	storage.EventStorage
+	storage.StateSnapshotStorage
 }
 
-func NewMockValidator(eventStorage EventStorage, stateSnapshotStorage StateSnapshotStorage) Validate {
+func NewMockValidator(eventStorage storage.EventStorage, stateSnapshotStorage storage.StateSnapshotStorage) Validate {
 	return &MockValidator{
 		EventStorage:         eventStorage,
 		StateSnapshotStorage: stateSnapshotStorage,

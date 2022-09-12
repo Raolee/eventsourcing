@@ -1,6 +1,9 @@
-package item
+package storage
 
-import "testing"
+import (
+	"eventsourcing/item"
+	"testing"
+)
 
 func TestNewMockStateSnapshotStorage(t *testing.T) {
 	TestMockEventStorage(t) // MockEventStorage 를 이용함
@@ -21,7 +24,7 @@ func TestNewMockStateSnapshotStorage(t *testing.T) {
 	t.Log(snapshot)
 	t.Log(lastEvent)
 
-	event := NewEvent(ChangeItemOwnerEvent, "v1", partitionKey, NewRequests(&Owner{
+	event := item.NewEvent(item.ChangeOwnerEvent, "v1", partitionKey, NewRequests(&Owner{
 		AccountKey: "raol2",
 	}))
 	err = storage.UpdateSnapshot(event)

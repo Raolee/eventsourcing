@@ -1,49 +1,51 @@
-package item
+package command
 
 import (
 	"encoding/json"
+	"eventsourcing/item"
+	"eventsourcing/item/model"
 	"time"
 )
 
 type Command interface {
-	CreateItem(*Event) *State
-	SaveItemData(*Event) *State
-	RemoveItem(*Event) *State
+	Create(*item.Event) *State
+	SaveData(*item.Event) *State
+	Remove(*item.Event) *State
 
 	/** Minting Events **/
-	ApplyRequestMintingItem(*Event) *State
-	ApplyFailedMintingItem(*Event) *State
-	ApplySuccessMintingItem(*Event) *State
+	RequestMinting(*item.Event) *State
+	FailedMinting(*item.Event) *State
+	SuccessMinting(*item.Event) *State
 
 	/** Market Events **/
-	RegisterMarketItem(*Event) *State
-	CancelMarketItem(*Event) *State
+	RegisterMarket(*item.Event) *State
+	CancelTrace(*item.Event) *State
 
-	ChangeItemOwner(*Event) *State
-	ChangeCharOwner(*Event) *State
+	ChangeOwner(*item.Event) *State
+	ChangeCharOwner(*item.Event) *State
 
 	/** Enhance Events **/
-	ApplyRequestEnhanceItem(*Event) *State
-	ApplyFailedEnhanceItem(*Event) *State
-	ApplySuccessEnhanceItem(*Event) *State
+	RequestEnhance(*item.Event) *State
+	FailedEnhance(*item.Event) *State
+	SuccessEnhance(*item.Event) *State
 
 	/** Character Events **/
-	ApplyRequestBindItemToCharacter(*Event) *State
-	ApplyFailedBindItemToCharacter(*Event) *State
-	ApplySuccessBindItemToCharacter(*Event) *State
-	ApplyRequestUnbindItemToCharacter(*Event) *State
-	ApplyFailedUnbindItemToCharacter(*Event) *State
-	ApplySuccessUnbindItemToCharacter(*Event) *State
+	RequestBindToCharacter(*item.Event) *State
+	FailedBindToCharacter(*item.Event) *State
+	SuccessBindToCharacter(*item.Event) *State
+	RequestUnbindToCharacter(*item.Event) *State
+	FailedUnbindToCharacter(*item.Event) *State
+	SuccessUnbindToCharacter(*item.Event) *State
 
-	/** Catalog Events **/
-	ApplyRequestBindItemToCatalog(*Event) *State
-	ApplyFailedBindItemToCatalog(*Event) *State
-	ApplySuccessBindItemToCatalog(*Event) *State
+	/** Collection Events **/
+	RequestCollect(*item.Event) *State
+	FailedCollect(*item.Event) *State
+	SuccessCollect(*item.Event) *State
 
 	/** Burn Events **/
-	ApplyRequestBurnItem(*Event) *State
-	ApplyFailedBurnItem(*Event) *State
-	ApplySuccessBurnItem(*Event) *State
+	RequestBurn(*item.Event) *State
+	FailedBurn(*item.Event) *State
+	SuccessBurn(*item.Event) *State
 }
 
 // Status | Item State 가 가지는 상태 값
@@ -54,6 +56,7 @@ const (
 	Removed          = Status("removed")            // 삭제한 상태 (Created 일 대만 가능)
 	Minting          = Status("minting")            // 민팅중 상태
 	Onchain          = Status("onchain")            // 온체인에 올라간 상태, 민팅이 완료되면 Onchain 상태가 된다
+	Market           = Status("market")             // 마켓으로 이동한 상태, 거래를 등록하거나 Onchain 상태로 갈 수 있다.
 	Trading          = Status("trading")            // 거래중 상태, 거래 취소/성공/실패하면 Onchain 상태로 변경된다
 	Enhancing        = Status("enhancing")          // 강화중 상태, 강화 성공/실패하면 Onchain 상태로 변경된다
 	BindingToChar    = Status("binding_to_char")    // 캐릭터 NFT 에 연결되는 상태, 성공하면 BoundCharNFT 가 되고 실패하면 Onchain 상태로 되돌아 간다
@@ -72,26 +75,26 @@ var (
 
 // Partition | State 는 Partition interface 를 구현한다. 즉, State 는 Partition key 를 꼭 가지고 있어야 한다는 의미
 type Partition interface {
-	PartitionKey() PartitionKey
+	PartitionKey() item.PartitionKey
 }
 
 // State | Item Domain 의 State, Command interface 를 구현하여 replay 할 수 있게 만든다.
 type State struct {
-	AssetKey           PartitionKey        `json:"assetKey"`
-	Status             Status              `json:"status"`
-	Owner              Owner               `json:"owner"`
-	ItemOnchainLink    *ItemOnchainLink    `json:"ItemOnchainLink,omitempty"`
-	CharOnchainLink    *CharOnchainLink    `json:"CharOnchainLink,omitempty"`
-	CatalogOnchainLink *CatalogOnchainLink `json:"CatalogOnchainLink,omitempty"`
-	Data               Data                `json:"data"`
-	Lock               bool                `json:"lock"`
-	CreatedAt          time.Time           `json:"createdAt"`
-	LastEventAt        time.Time           `json:"lastEventAt"`
-	LastEventId        EventId             `json:"lastEventId"`   // 현 State 가 만들어진 마지막 EventId
-	LastEventName      EventName           `json:"lastEventName"` // 현 STate 가 만들어진 마지막 EventName
+	AssetKey           item.PartitionKey         `json:"assetKey"`
+	Status             Status                    `json:"status"`
+	Owner              model.Owner               `json:"owner"`
+	ItemOnchainLink    *model.ItemOnchainLink    `json:"ItemOnchainLink,omitempty"`
+	CharOnchainLink    *model.CharOnchainLink    `json:"CharOnchainLink,omitempty"`
+	CatalogOnchainLink *model.CatalogOnchainLink `json:"CatalogOnchainLink,omitempty"`
+	Data               model.Data                `json:"data"`
+	Lock               bool                      `json:"lock"`
+	CreatedAt          time.Time                 `json:"createdAt"`
+	LastEventAt        time.Time                 `json:"lastEventAt"`
+	LastEventId        item.EventId              `json:"lastEventId"`   // 현 State 가 만들어진 마지막 EventId
+	LastEventName      item.EventName            `json:"lastEventName"` // 현 STate 가 만들어진 마지막 EventName
 }
 
-func (i *State) PartitionKey() PartitionKey {
+func (i *State) PartitionKey() item.PartitionKey {
 	return i.AssetKey
 }
 
@@ -106,7 +109,7 @@ func (i *State) String() string {
 	return string(marshal)
 }
 
-func (i *State) CreateItem(event *Event) *State {
+func (i *State) Create(event *item.Event) *State {
 	return &State{
 		AssetKey:           event.PartitionKey,
 		Status:             Created,
@@ -123,39 +126,39 @@ func (i *State) CreateItem(event *Event) *State {
 	}
 }
 
-func (i *State) setEventInfo(event *Event) {
+func (i *State) setEventInfo(event *item.Event) {
 	i.LastEventAt = event.EventAt
 	i.LastEventId = event.Id
 	i.LastEventName = event.Name
 }
 
-func (i *State) SaveItemData(event *Event) *State {
+func (i *State) SaveData(event *item.Event) *State {
 	i.Data = *event.Requests.GetData()
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) RemoveItem(event *Event) *State {
+func (i *State) Remove(event *item.Event) *State {
 	i.Status = Removed
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplyRequestMintingItem(event *Event) *State {
+func (i *State) RequestMinting(event *item.Event) *State {
 	i.Status = Minting
 	i.Lock = true
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplyFailedMintingItem(event *Event) *State {
+func (i *State) FailedMinting(event *item.Event) *State {
 	i.Status = Created
 	i.Lock = false
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplySuccessMintingItem(event *Event) *State {
+func (i *State) SuccessMinting(event *item.Event) *State {
 	i.ItemOnchainLink = event.Requests.GetItemContract()
 	i.Status = Onchain
 	i.Lock = false
@@ -163,21 +166,21 @@ func (i *State) ApplySuccessMintingItem(event *Event) *State {
 	return i
 }
 
-func (i *State) RegisterMarketItem(event *Event) *State {
+func (i *State) RegisterMarket(event *item.Event) *State {
 	i.Status = Trading
 	i.Lock = true
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) CancelMarketItem(event *Event) *State {
+func (i *State) CancelTrace(event *item.Event) *State {
 	i.Status = Onchain
 	i.Lock = false
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ChangeItemOwner(event *Event) *State {
+func (i *State) ChangeOwner(event *item.Event) *State {
 	i.Owner = *event.Requests.GetOwner()
 	i.Status = Onchain
 	i.Lock = false
@@ -185,7 +188,7 @@ func (i *State) ChangeItemOwner(event *Event) *State {
 	return i
 }
 
-func (i *State) ChangeCharOwner(event *Event) *State {
+func (i *State) ChangeCharOwner(event *item.Event) *State {
 	i.Owner = *event.Requests.GetOwner()
 	i.Status = Onchain
 	i.Lock = false
@@ -193,21 +196,21 @@ func (i *State) ChangeCharOwner(event *Event) *State {
 	return i
 }
 
-func (i *State) ApplyRequestEnhanceItem(event *Event) *State {
+func (i *State) RequestEnhance(event *item.Event) *State {
 	i.Status = Enhancing
 	i.Lock = true
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplyFailedEnhanceItem(event *Event) *State {
+func (i *State) FailedEnhance(event *item.Event) *State {
 	i.Status = Onchain
 	i.Lock = false
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplySuccessEnhanceItem(event *Event) *State {
+func (i *State) SuccessEnhance(event *item.Event) *State {
 	i.Data = *event.Requests.GetData()
 	i.Status = Onchain
 	i.Lock = true
@@ -215,21 +218,21 @@ func (i *State) ApplySuccessEnhanceItem(event *Event) *State {
 	return i
 }
 
-func (i *State) ApplyRequestBindItemToCharacter(event *Event) *State {
+func (i *State) RequestBindToCharacter(event *item.Event) *State {
 	i.Status = BindingToChar
 	i.Lock = true
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplyFailedBindItemToCharacter(event *Event) *State {
+func (i *State) FailedBindToCharacter(event *item.Event) *State {
 	i.Status = Onchain
 	i.Lock = false
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplySuccessBindItemToCharacter(event *Event) *State {
+func (i *State) SuccessBindToCharacter(event *item.Event) *State {
 	i.CharOnchainLink = event.Requests.GetCharContract()
 	i.Status = BoundChar
 	i.Lock = false
@@ -237,21 +240,21 @@ func (i *State) ApplySuccessBindItemToCharacter(event *Event) *State {
 	return i
 }
 
-func (i *State) ApplyRequestUnbindItemToCharacter(event *Event) *State {
+func (i *State) RequestUnbindToCharacter(event *item.Event) *State {
 	i.Status = UnbindingToChar
 	i.Lock = true
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplyFailedUnbindItemToCharacter(event *Event) *State {
+func (i *State) FailedUnbindToCharacter(event *item.Event) *State {
 	i.Status = BoundChar
 	i.Lock = false
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplySuccessUnbindItemToCharacter(event *Event) *State {
+func (i *State) SuccessUnbindToCharacter(event *item.Event) *State {
 	i.CharOnchainLink = nil
 	i.Status = Onchain
 	i.Lock = false
@@ -259,21 +262,21 @@ func (i *State) ApplySuccessUnbindItemToCharacter(event *Event) *State {
 	return i
 }
 
-func (i *State) ApplyRequestBindItemToCatalog(event *Event) *State {
+func (i *State) RequestCollect(event *item.Event) *State {
 	i.Status = BindingToCatalog
 	i.Lock = true
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplyFailedBindItemToCatalog(event *Event) *State {
+func (i *State) FailedCollect(event *item.Event) *State {
 	i.Status = Onchain
 	i.Lock = true
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplySuccessBindItemToCatalog(event *Event) *State {
+func (i *State) SuccessCollect(event *item.Event) *State {
 	i.CatalogOnchainLink = event.Requests.GetCatalogContract()
 	i.Status = BoundCatalog
 	i.Lock = true
@@ -281,21 +284,21 @@ func (i *State) ApplySuccessBindItemToCatalog(event *Event) *State {
 	return i
 }
 
-func (i *State) ApplyRequestBurnItem(event *Event) *State {
+func (i *State) RequestBurn(event *item.Event) *State {
 	i.Status = Burning
 	i.Lock = true
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplyFailedBurnItem(event *Event) *State {
+func (i *State) FailedBurn(event *item.Event) *State {
 	i.Status = Onchain
 	i.Lock = false
 	i.setEventInfo(event)
 	return i
 }
 
-func (i *State) ApplySuccessBurnItem(event *Event) *State {
+func (i *State) SuccessBurn(event *item.Event) *State {
 	i.Status = Burned
 	i.Owner.AccountKey = ""
 	i.Lock = true

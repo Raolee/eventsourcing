@@ -1,14 +1,15 @@
 package item
 
 import (
+	"eventsourcing/item/command"
 	"github.com/rs/xid"
 	"testing"
 )
 
 func TestCommand(t *testing.T) {
-	createCommand := Command.CreateItem
+	createCommand := command.Command.Create
 
-	state := &State{}
+	state := &command.State{}
 	assetKey := PartitionKey(xid.New().String())
 	req := NewRequests(nil)
 	req.SetReq(&Owner{
@@ -24,14 +25,14 @@ func TestCommand(t *testing.T) {
 	req.SetReq(&Data{
 		Data: "data",
 	})
-	createEvent := NewEvent(CreateItemEvent, "v1", assetKey, req)
+	createEvent := NewEvent(CreateEvent, "v1", assetKey, req)
 
 	state = createCommand(state, createEvent)
 	t.Log(state)
 
 	saveReq := NewRequests(&Data{Data: "saved data"})
-	saveEvent := NewEvent(SaveItemDataEvent, "v1", assetKey, saveReq)
+	saveEvent := NewEvent(SaveDataEvent, "v1", assetKey, saveReq)
 
-	state = Command.SaveItemData(state, saveEvent)
+	state = command.Command.SaveData(state, saveEvent)
 	t.Log(state)
 }

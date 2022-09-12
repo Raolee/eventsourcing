@@ -1,16 +1,20 @@
 package item
 
-import "testing"
+import (
+	"eventsourcing"
+	"eventsourcing/item/storage"
+	"testing"
+)
 
 func TestEventReplay(t *testing.T) {
-	TestMockEventStorage(t) // MockEventStorage 에 쌓아둔 이벤트를 이용
+	storage.TestMockEventStorage(t) // MockEventStorage 에 쌓아둔 이벤트를 이용
 
-	events, err := mockStorage.GetEvents(PartitionKey(partitionKey))
+	events, err := storage.mockStorage.GetEvents(PartitionKey(storage.partitionKey))
 	if err != nil {
 		t.Error(err)
 	}
 
-	replayedState, err := ReplayEventsWithoutState(events...)
+	replayedState, err := eventsourcing.ReplayEventsWithoutState(events...)
 	if err != nil {
 		t.Error(err)
 	}
