@@ -2,43 +2,42 @@ package example
 
 import (
 	es "eventsourcing"
+	"eventsourcing/example/currency"
 	"github.com/rs/xid"
 	"testing"
 )
 
 func TestCommander(t *testing.T) {
 	pk := "test_pk"
-	e1 := NewModifyAmountEvent(es.PartitionKey(pk), 1, &ExampleRequest{
+	e1 := currency.NewAddAmountEvent(es.PartitionKey(pk), 1, &currency.Request{
 		Amount: 100,
 	})
-	idleStatus := IDLE
-	e2 := NewChangeStatusEvent(es.PartitionKey(pk), 2, &ExampleRequest{
-		Status: (*Status)(&idleStatus),
+	idleStatus := currency.IDLE
+	e2 := currency.NewChangeStatusEvent(es.PartitionKey(pk), 2, &currency.Request{
+		Status: (*currency.Status)(&idleStatus),
 	})
 	value := "value test"
-	e3 := NewChangeValueEvent(es.PartitionKey(pk), 3, &ExampleRequest{
+	e3 := currency.NewChangeValueEvent(es.PartitionKey(pk), 3, &currency.Request{
 		Value: &value,
 	})
-	e4 := NewLockEvent(es.PartitionKey(pk), 4, nil)
-	e5 := NewUnlockEvent(es.PartitionKey(pk), 5, nil)
-	e6 := NewModifyAmountEvent(es.PartitionKey(pk), 1, &ExampleRequest{
+	e4 := currency.NewAddAmountEvent(es.PartitionKey(pk), 1, &currency.Request{
 		Amount: 50,
 	})
-	e7 := NewModifyAmountEvent(es.PartitionKey(pk), 1, &ExampleRequest{
+	e5 := currency.NewAddAmountEvent(es.PartitionKey(pk), 1, &currency.Request{
 		Amount: -100,
 	})
-	e8 := NewModifyAmountEvent(es.PartitionKey(pk), 1, &ExampleRequest{
+	e6 := currency.NewAddAmountEvent(es.PartitionKey(pk), 1, &currency.Request{
 		Amount: 300,
 	})
 
-	events := []*es.Event[ExampleRequest]{
-		e1, e2, e3, e4, e5, e6, e7, e8,
+	events := []*es.Event[currency.Request]{
+		e1, e2, e3, e4, e5, e6,
 	}
 
-	state := NewExampleState(es.PartitionKey(xid.New().String()))
+	state := currency.NewState(es.PartitionKey(xid.New().String()))
 
 	for _, evt := range events {
-		f, _ := ExampleCommander.GetCommand(*evt.EventType)
+		f, _ := CurrencyCommander.GetCommand(*evt.EventType)
 		state = f(state, evt)
 		t.Log(state)
 	}

@@ -19,10 +19,15 @@ type baseManager[S CommonState[R], R any] struct {
 }
 
 // NewBaseManager | 기본적인 매니저를 생성한다. 아래의 규칙을 따름
+//
 // 1. Validate : Put 전에 호출하여 저장가능한지 확인
+//
 // 2. Put : Validate 에서 문제가 없으면 Event 를 EventStorage 에 저장
+//
 // 3. UpdateStateSnapshot : StateSnapshot 을 최신 event 로 업데이트
+//
 // 4. GetEvents : EventStorage 에서 pk 로 이벤트를 조회
+//
 // 5. GetStateSnapshot : StateSnapshotStorage + EventStorage 를 합쳐서 최신 State 를 조회
 func NewBaseManager[S CommonState[R], R any](
 	rule *Rule,
