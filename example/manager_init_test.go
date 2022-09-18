@@ -52,13 +52,23 @@ var (
 	makeChangeStatusRequest = func() *EventTypeAndRequest {
 		rand.Seed(time.Now().UnixNano())
 		return &EventTypeAndRequest{
-			Et: &currency.ChangeValueEvent,
+			Et: &currency.ChangeStatusEvent,
 			Req: &currency.Request{
 				Status: (*currency.Status)(ptr.Int(currency.IDLE)),
 			},
 		}
 	}
-	makeChangeStatusV2Request = func() *EventTypeAndRequest {
+	makeChangeValueRequest = func() *EventTypeAndRequest {
+		rand.Seed(time.Now().UnixNano())
+		return &EventTypeAndRequest{
+			Et: &currency.ChangeValueEvent,
+			Req: &currency.Request{
+				Status: (*currency.Status)(ptr.Int(currency.CLAIM)),
+				Value:  ptr.String(strconv.Itoa(rand.Int())),
+			},
+		}
+	}
+	makeChangeValueV2Request = func() *EventTypeAndRequest {
 		rand.Seed(time.Now().UnixNano())
 		return &EventTypeAndRequest{
 			Et: &currency.ChangeValueV2Event,
@@ -86,7 +96,8 @@ func TestCurrencyManager(t *testing.T) {
 			makeAddAmountRequest,
 			makeMinusAmountRequest,
 			makeChangeStatusRequest,
-			makeChangeStatusV2Request,
+			makeChangeValueRequest,
+			makeChangeValueV2Request,
 		}
 
 		// 첫 시작은 create 부터
@@ -103,7 +114,7 @@ func TestCurrencyManager(t *testing.T) {
 				close(ch)
 				return
 			default:
-				time.Sleep(3 * time.Second)
+				time.Sleep(1 * time.Second)
 			}
 		}
 	}()
@@ -141,7 +152,6 @@ func TestCurrencyManager(t *testing.T) {
 
 	log.Println("[events]")
 	log.Println(CurrencyEsManager.GetEvents(pk))
-	log.Println("[last latest]")
+	log.Println("[latest snapshot]")
 	log.Println(CurrencyEsManager.GetLatestState(pk))
-
 }
