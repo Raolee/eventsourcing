@@ -176,12 +176,12 @@ func (b *baseManager[S, R]) UpdateStateSnapshot(pk PartitionKey) (err error) {
 		return NewSnapshotStorageError(err)
 	}
 
-	var last *Event[R]
-	last, err = b.es.GetLastEvent(pk)
-
-	if (*current.State()).GetLastEvent().EventNo == last.EventNo {
-		return nil // 이미 최신이므로 건너뜀
-	}
+	//var last *Event[R]
+	//last, err = b.es.GetLastEvent(pk)
+	//
+	//if (*current.State()).GetLastEvent().EventNo == last.EventNo {
+	//	return nil // 이미 최신이므로 건너뜀
+	//}
 
 	// replay 할 event 리스트를 만듦
 	var events []*Event[R]

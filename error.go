@@ -50,6 +50,7 @@ const (
 	Nothing Code = iota
 	AlreadyLockedEvent
 	AlreadyUnlockedEvent
+	NoHasLockError
 	NoHasCommand
 	CommandError
 	ValidateError
