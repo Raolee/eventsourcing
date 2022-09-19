@@ -25,9 +25,6 @@ type EventStorage[R any] interface {
 	GetEvents(pk PartitionKey) ([]*Event[R], error)                          // partition key 의 전체 event list 를 조회
 	GetEventsAfterEventNo(pk PartitionKey, eventNo int) ([]*Event[R], error) // partition key 의 eventNo 보다 큰 events 를 조회
 	GetLastEvent(pk PartitionKey) (*Event[R], error)                         // partition key 의 마지막 event 를 조회
-	GetLock(pk PartitionKey) (bool, error)                                   // partition key 에 락이 걸려있는지 확인
-	Lock(pk PartitionKey) (already bool, err error)                          // partition key 을 잠금. 이미 잠금이 되어있으면 already=true
-	Unlock(pk PartitionKey) (already bool, err error)                        // partition key 를 잠금 해제. 이미 잠금 해제가 되어있으면 already=false
 }
 
 // StateSnapshotStorage | Event Snapshot 저장소의 인터페이스

@@ -139,7 +139,7 @@ func TestCurrencyManager(t *testing.T) {
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)
-			err := CurrencyEsManager.UpdateStateSnapshot(pk)
+			err := CurrencyEsManager.ApplyEvents(pk)
 			if err != nil {
 				t.Logf("update state snapshot failed. %s - %s", pk, err)
 			}
@@ -151,7 +151,7 @@ func TestCurrencyManager(t *testing.T) {
 	<-ctx.Done()
 
 	log.Println("[events]")
-	log.Println(CurrencyEsManager.GetEvents(pk))
-	log.Println("[latest snapshot]")
+	log.Println(CurrencyEsManager.GetEvents(pk, 0))
+	log.Println("[snapshot + events replayed]")
 	log.Println(CurrencyEsManager.GetLatestState(pk))
 }

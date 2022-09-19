@@ -13,6 +13,7 @@ type Rule struct {
 	MinEventNoTerm  *int           // default 5, 최근 eventNo 와 snapshot 의 eventNo 와 최소 차이. 이 값을 넘어가면 snapshot 을 저장한다.
 }
 
+// Merge | Rule 을 병합
 func (r *Rule) Merge(rule *Rule) {
 	if rule != nil {
 		if rule.AlwaysSnapshot != nil {
@@ -27,6 +28,7 @@ func (r *Rule) Merge(rule *Rule) {
 	}
 }
 
+// Event Sourcing 의 룰 기본 값
 func newDefaultRule() *Rule {
 	return &Rule{
 		AlwaysSnapshot:  ptr.Bool(false),

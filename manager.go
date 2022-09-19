@@ -1,15 +1,23 @@
 package eventsourcing
 
+// TODO 매니저를 역할별로 더 나누어야 할 듯
+// 예상
+// validator
+// producer
+// consumer
+// replayer
+// querier
+
 type Manager[S CommonState[R], R any] interface {
-	Validate(pk PartitionKey, et *EventType) error          // 이벤트를 실행해도 되는지 유효성 검사를 한다.
-	Put(pk PartitionKey, et *EventType, req *R) error       // 이벤트를 저장한다.
-	UpdateStateSnapshot(pk PartitionKey) error              // State Snapshot 을 최신 event 로 업데이트 한다.
-	GetEvents(pk PartitionKey) ([]*Event[R], error)         // 이벤트 리스트를 가져온다.
-	GetLatestState(pk PartitionKey) (*State[S, R], error)   // 이벤트로 리플레이한 최신 스테이트를 가져온다.
-	GetStateSnapshot(pk PartitionKey) (*State[S, R], error) // 스냅샷의 스테이트를 가져온다.
+	Validate(pk PartitionKey, et *EventType) error               // 이벤트를 실행해도 되는지 유효성 검사를 한다.
+	Put(pk PartitionKey, et *EventType, req *R) error            // 이벤트를 저장한다.
+	ApplyEvents(pk PartitionKey) error                           // 이벤트를 적용한다.
+	GetEvents(pk PartitionKey, eventNo int) ([]*Event[R], error) // eventNo 보다 큰 이벤트 리스트를 가져온다.
+	GetLatestState(pk PartitionKey) (*State[S, R], error)        // 이벤트로 리플레이한 최신 스테이트를 가져온다.
+	GetStateSnapshot(pk PartitionKey) (*State[S, R], error)      // 스냅샷의 스테이트를 가져온다.
 }
 
-// baseManager | 가장 기본적인 이벤트 소싱 매니저
+// baseManager | 가장 기본적인 이벤트 소싱 매니저, 메세지 스트림을 사용하지 않는다.
 type baseManager[S CommonState[R], R any] struct {
 	c    *Commander[S, R]
 	v    *Validator[S, R]
@@ -24,7 +32,7 @@ type baseManager[S CommonState[R], R any] struct {
 //
 // 2. Put : Validate 에서 문제가 없으면 Event 를 EventStorage 에 저장
 //
-// 3. UpdateStateSnapshot : StateSnapshot 을 최신 event 로 업데이트
+// 3. ApplyEvents : 아직 반영하지 않은 이벤트를 적용 (= StateSnapshotStorage 저장)
 //
 // 4. GetEvents : EventStorage 에서 pk 로 이벤트를 조회
 //
@@ -47,32 +55,6 @@ func NewBaseManager[S CommonState[R], R any](
 	}
 }
 
-func (b *baseManager[S, R]) lock(pk PartitionKey, et *EventType) error {
-	if et.NeedLock {
-		already, err := b.es.Lock(pk)
-		if err != nil {
-			return NewLockedEventError(err, pk, et)
-		}
-		if already {
-			return NewLockedEventError(nil, pk, et)
-		}
-	}
-	return nil
-}
-
-func (b *baseManager[S, R]) unlock(pk PartitionKey, et *EventType) error {
-	if et.NeedLock {
-		already, err := b.es.Unlock(pk)
-		if err != nil {
-			return err
-		}
-		if already {
-			return nil
-		}
-	}
-	return nil
-}
-
 func (b *baseManager[S, R]) replay(pk PartitionKey, current *State[S, R], events []*Event[R]) (state *State[S, R], err error) {
 	for _, e := range events {
 		cmd, ok := b.c.GetCommand(*e.EventType)
@@ -84,16 +66,9 @@ func (b *baseManager[S, R]) replay(pk PartitionKey, current *State[S, R], events
 	return current, nil
 }
 
+// Validate | 이벤트를 적용할 수 있는지 Validating
 func (b *baseManager[S, R]) Validate(pk PartitionKey, et *EventType) (err error) {
 	defer handleError(&err)
-
-	lock, e := b.es.GetLock(pk) // 이벤트의 잠금 상태를 가져옴
-	if e != nil {
-		return e // 에러면 리턴
-	}
-	if lock {
-		return NewLockedEventError(nil, pk, et) // 잠겼으면 Validate 실패
-	}
 
 	// get validates
 	validates, ok := b.v.GetValidates(*et)
@@ -107,7 +82,7 @@ func (b *baseManager[S, R]) Validate(pk PartitionKey, et *EventType) (err error)
 		return err
 	}
 	if snapshot == nil {
-		err = b.UpdateStateSnapshot(pk) // 스냅샷이 없으면 최신으로 업데이트 한다
+		err = b.ApplyEvents(pk) // 스냅샷이 없으면 최신으로 업데이트 한다
 		if err != nil {
 			return err
 		}
@@ -128,18 +103,9 @@ func (b *baseManager[S, R]) Validate(pk PartitionKey, et *EventType) (err error)
 	return nil
 }
 
+// Put | 이벤트를 저장합니다.
 func (b *baseManager[S, R]) Put(pk PartitionKey, et *EventType, req *R) (err error) {
 	defer handleError(&err)
-	err = b.lock(pk, et)
-	if err != nil {
-		return err
-	}
-	defer func(err *error) {
-		e := b.unlock(pk, et)
-		if e != nil {
-			*err = e
-		}
-	}(&err)
 
 	// event 생성 및 command 실행
 	var no int
@@ -155,7 +121,8 @@ func (b *baseManager[S, R]) Put(pk PartitionKey, et *EventType, req *R) (err err
 	return nil
 }
 
-func (b *baseManager[S, R]) UpdateStateSnapshot(pk PartitionKey) (err error) {
+// ApplyEvents | pk 에 쌓여있는 이벤트 들을 적용합니다. => snapshot 에 반영
+func (b *baseManager[S, R]) ApplyEvents(pk PartitionKey) (err error) {
 	defer handleError(&err)
 
 	/**
@@ -170,26 +137,19 @@ func (b *baseManager[S, R]) UpdateStateSnapshot(pk PartitionKey) (err error) {
 	3. replay 된 state 를 snapshot 에 저장
 	*/
 	// 스냅샷이 있는지 조회, 없다면 만들어 주어야 함
-	var current *State[S, R] = nil
-	current, err = b.ss.GetSnapshot(pk)
-	if err != nil {
-		return NewSnapshotStorageError(err)
-	}
 
-	//var last *Event[R]
-	//last, err = b.es.GetLastEvent(pk)
-	//
-	//if (*current.State()).GetLastEvent().EventNo == last.EventNo {
-	//	return nil // 이미 최신이므로 건너뜀
-	//}
+	state, err := b.GetStateSnapshot(pk)
 
 	// replay 할 event 리스트를 만듦
 	var events []*Event[R]
-	if current != nil { // 스냅샷이 존재하는 경우, snapshot 이후의 events 만 가져온다
-		s := *current.State()
-		events, err = b.es.GetEventsAfterEventNo(pk, s.GetLastEvent().EventNo) // 마지막 이벤트 이후의 이벤트 리스트를 조회
-	} else { // 스냅샷이 존재하지 않는 경우, 전체를 가져온다
-		events, err = b.es.GetEvents(pk) // 처음부터 끝까지의 이벤트 리스트를 조회
+	var eventNo int
+	if state != nil { // 스냅샷이 존재하는 경우, snapshot 이후의 events 만 가져온다
+		eventNo = (*state.State()).GetLastEvent().EventNo
+	}
+
+	events, err = b.GetEvents(pk, eventNo)
+	if err != nil {
+		return
 	}
 
 	if len(events) == 0 {
@@ -197,29 +157,38 @@ func (b *baseManager[S, R]) UpdateStateSnapshot(pk PartitionKey) (err error) {
 	}
 
 	// replay events, event 로 현재 state 를 만든다
-	current, err = b.replay(pk, current, events)
+	state, err = b.replay(pk, state, events)
 	if err != nil {
 		return err
 	}
 
 	// snapshot 에 저장
-	err = b.ss.SaveSnapshot(pk, current)
+	err = b.ss.SaveSnapshot(pk, state)
 	if err != nil {
 		return NewSnapshotStorageError(err)
 	}
 	return nil
 }
 
-func (b *baseManager[S, R]) GetEvents(pk PartitionKey) (events []*Event[R], err error) {
+// GetEvents | pk 의 event 리스트를 가져옵니다
+func (b *baseManager[S, R]) GetEvents(pk PartitionKey, afterEventNo int) (events []*Event[R], err error) {
 	defer handleError(&err)
 
-	events, err = b.es.GetEvents(pk)
-	if err != nil {
-		return nil, NewEventStorageError(err)
+	if afterEventNo == 0 {
+		events, err = b.es.GetEvents(pk)
+		if err != nil {
+			return nil, NewEventStorageError(err)
+		}
+	} else {
+		events, err = b.es.GetEventsAfterEventNo(pk, afterEventNo) // eventNo 이후의 리스트를 조회
+		if err != nil {
+			return nil, NewEventStorageError(err)
+		}
 	}
 	return
 }
 
+// GetLatestState | pk 의 이벤트를 replay 해서 최신 state 를 만듭니다.
 func (b *baseManager[S, R]) GetLatestState(pk PartitionKey) (state *State[S, R], err error) {
 	defer handleError(&err)
 
@@ -235,6 +204,7 @@ func (b *baseManager[S, R]) GetLatestState(pk PartitionKey) (state *State[S, R],
 	return
 }
 
+// GetStateSnapshot | 현재 snapshot 에 저장된 이벤트를 가져옵니다.
 func (b *baseManager[S, R]) GetStateSnapshot(pk PartitionKey) (state *State[S, R], err error) {
 	defer handleError(&err)
 

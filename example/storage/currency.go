@@ -16,21 +16,19 @@ func (c *Counter) Increase(delta int32) int32 {
 }
 
 type CurrencyMemoryEventStorage struct {
-	eventNoStorage   map[es.PartitionKey]*Counter              // pk 의 event 번호를 저장하는 스토리지
-	pkGroupStorage   map[es.PartitionKey][]es.EventId          // pk 의 event id 리스트를 저장하는 스토리지
-	eventStorage     map[es.EventId]es.Event[currency.Request] // event id 별로 event 를 저장하는 스토리지
-	eventLockStorage map[es.PartitionKey]bool                  // pk 의 event 자체의 lock 값을 저장하는 스토리지
-	pkLockers        map[es.PartitionKey]*sync.RWMutex         // pk 안에서 dirty read 를 방지하기 위한 RWMutex
-	esLocker         sync.Mutex                                // event storage 자체적으로 사용하는 Mutex
+	eventNoStorage map[es.PartitionKey]*Counter              // pk 의 event 번호를 저장하는 스토리지
+	pkGroupStorage map[es.PartitionKey][]es.EventId          // pk 의 event id 리스트를 저장하는 스토리지
+	eventStorage   map[es.EventId]es.Event[currency.Request] // event id 별로 event 를 저장하는 스토리지
+	pkLockers      map[es.PartitionKey]*sync.RWMutex         // pk 안에서 dirty read 를 방지하기 위한 RWMutex
+	esLocker       sync.Mutex                                // event storage 자체적으로 사용하는 Mutex
 }
 
 func NewCurrencyEventStorage() es.EventStorage[currency.Request] {
 	return &CurrencyMemoryEventStorage{
-		eventNoStorage:   make(map[es.PartitionKey]*Counter),
-		pkGroupStorage:   make(map[es.PartitionKey][]es.EventId),
-		eventStorage:     make(map[es.EventId]es.Event[currency.Request]),
-		eventLockStorage: make(map[es.PartitionKey]bool),
-		pkLockers:        make(map[es.PartitionKey]*sync.RWMutex),
+		eventNoStorage: make(map[es.PartitionKey]*Counter),
+		pkGroupStorage: make(map[es.PartitionKey][]es.EventId),
+		eventStorage:   make(map[es.EventId]es.Event[currency.Request]),
+		pkLockers:      make(map[es.PartitionKey]*sync.RWMutex),
 	}
 }
 
@@ -56,7 +54,7 @@ func (a *CurrencyMemoryEventStorage) IncreaseEventNo(pk es.PartitionKey) (eventN
 		pkLocker := a.getPkLocker(pk) // pk 에 대해서만 lock 이 걸리면 되므로 pk pkLockers 를 가져온다
 		pkLocker.Lock()
 		defer pkLocker.Unlock()
-		if _, ok = a.eventLockStorage[pk]; !ok {
+		if _, ok = a.eventNoStorage[pk]; !ok {
 			a.eventNoStorage[pk] = &Counter{0}
 		}
 	}
@@ -145,57 +143,6 @@ func (a *CurrencyMemoryEventStorage) GetLastEvent(pk es.PartitionKey) (*es.Event
 	eventId := group[len(group)-1]
 	event := a.eventStorage[eventId]
 	return &event, nil
-}
-
-func (a *CurrencyMemoryEventStorage) GetLock(pk es.PartitionKey) (bool, error) {
-	// 현재 storage 에 저장된 lock 값을 읽을 때 dirty read 를 방지하기 위해
-	// Read lock 을 이용한다.
-
-	pkLocker := a.getPkLocker(pk)
-	pkLocker.RLock()
-	defer pkLocker.RUnlock()
-
-	return a.eventLockStorage[pk], nil
-}
-
-func (a *CurrencyMemoryEventStorage) Lock(pk es.PartitionKey) (already bool, err error) {
-	// lock 을 거는 이벤트와 unlock 을 거는 이벤트가 분리된 경우, lock event 가 사용한다.
-	// eventLockStorage 에 lock 여부를 저장할 때도, atomic 하게 작동해야 하므로 pkLockers 를 이용한다.
-
-	pkLocker := a.getPkLocker(pk)
-	pkLocker.Lock()
-	defer pkLocker.Unlock()
-
-	lockValue, ok := a.eventLockStorage[pk]
-	if !ok {
-		a.eventLockStorage[pk] = true
-		return false, nil
-	}
-	if lockValue {
-		return true, nil
-	}
-	a.eventLockStorage[pk] = true
-	return false, nil
-}
-
-func (a *CurrencyMemoryEventStorage) Unlock(pk es.PartitionKey) (already bool, err error) {
-	// lock 을 거는 이벤트와 unlock 을 거는 이벤트가 분리된 경우, unlock event 가 사용한다.
-	// eventLockStorage 에 lock 여부를 저장할 때도, atomic 하게 작동해야 하므로 pkLockers 를 이용한다.
-
-	pkLocker := a.getPkLocker(pk)
-	pkLocker.Lock()
-	defer pkLocker.Unlock()
-
-	lockValue, ok := a.eventLockStorage[pk]
-	if !ok {
-		a.eventLockStorage[pk] = false
-		return false, nil
-	}
-	if !lockValue {
-		return true, nil
-	}
-	a.eventLockStorage[pk] = false
-	return false, nil
 }
 
 type CurrencySnapshotStorage struct {
