@@ -27,7 +27,11 @@ sequenceDiagram
         else hasn't snapshot
             Querier ->> Event Storage: get all events
         end
-        Querier ->>- Manager: state
+        Querier ->>- Manager: state or error
+        alt has error
+            Manager ->> Event Domain Service: error
+            Event Domain Service ->> Provider: error
+        end
         loop replay events
             Manager ->> Manager: process event
         end
@@ -38,22 +42,21 @@ sequenceDiagram
     end
     alt no pass
         Event Domain Service ->> Provider: failure
-    else pass
-        Event Domain Service ->>+ Manager: put event
-        Manager ->>+ Commander: dispense event no
-        Commander ->>- Manager: event no or error
-        alt has error
-            Manager ->> Event Domain Service: error
-            Event Domain Service ->> Provider: error
-        end
-        Manager ->> Manager: make event
-        Manager ->>+ Commander: put event
-        Commander ->>- Manager: success or error
-        alt has error
-            Manager ->> Event Domain Service: error
-            Event Domain Service ->> Provider: error
-        end
-        Manager ->>- Event Domain Service: success
-        Event Domain Service ->>-Provider: success
     end
+    Event Domain Service ->>+ Manager: put event
+    Manager ->>+ Commander: dispense event no
+    Commander ->>- Manager: event no or error
+    alt has error
+        Manager ->> Event Domain Service: error
+        Event Domain Service ->> Provider: error
+    end
+    Manager ->> Manager: make event
+    Manager ->>+ Commander: put event
+    Commander ->>- Manager: success or error
+    alt has error
+        Manager ->> Event Domain Service: error
+        Event Domain Service ->> Provider: error
+    end
+    Manager ->>- Event Domain Service: success
+    Event Domain Service ->>-Provider: success
 ```
