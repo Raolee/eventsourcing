@@ -8,23 +8,23 @@
 ### Domain 설명
 - Provider
   - Event Sourcing 요청자
-- EventService : 하위 도메인을 노출하는 서비스
-  - Domains
-    - EventMarker : Pk 마다 최신 이벤트를 마킹(marking)하는 서비스/스토리지
-    - EventWorker : Event 메세지 스트림을 소비하는 워커
+- Commander : Event 생산자
+- Worker : 메세지 스트림을 소비하는 워커
+- Querier : Storage 를 조회하는 도메인
 - Storage
   - MessageStream : Event 메세지 스트림
+  - Latest Event Storage : PK의 최신 Event 만 다루는 저장소
   - Event Storage : Event 저장소
   - Snapshot Storage : Replay 된 State Snapshot 저장소
 * * *
 ### Core Rules
 - Validating
-  - 마킹된 이벤트만 사용하여 validating 한다
+  - 최신 이벤트만 사용하여 validating 한다
 - Command 요청 시
-  - Message Stream에 잘 써지면 return
+  - Message Stream에 잘 써지면 return 한다
 - Snapshot 저장
   - Snapshot Rule 에 따라, 주기적으로 저장
-  - Query 요청 중, 최신 State 를 조회할 때 저장
+  - Query 요청 중, 최신 State 를 조회하면 snapshot 저장
 
 * * *
 ### Request Event Sequence Diagram
