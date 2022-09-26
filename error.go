@@ -20,11 +20,11 @@ import (
 //
 // [NoHasCommand]
 // - 이벤트에 매핑된 커맨드가 없는 경우 사용하는 에러
-// 이벤트는 반드시 Command 와 짝이 이루어져야함.
+// 이벤트는 반드시 Process 와 짝이 이루어져야함.
 //
 // [CommandError]
-// - Command 처리 중 에러가 발생하는 경우 사용하는 에러
-// Command 는 수행이 State 변경이 go code 상에서만 이뤄지므로 에러가 발생하지 않게 만들어야함.
+// - Process 처리 중 에러가 발생하는 경우 사용하는 에러
+// Process 는 수행이 State 변경이 go code 상에서만 이뤄지므로 에러가 발생하지 않게 만들어야함.
 // 하지만 코드 상 bug 로 에러가 발생한다면, CommandError 를 사용하고 이는 매우 크리티컬하게 다뤄야 함
 //
 // [ValidateError]

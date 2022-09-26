@@ -5,31 +5,31 @@ import (
 )
 
 /**
-State 수정/변경 하는 Command 를 구현한다.
+State 수정/변경 하는 Process 를 구현한다.
 */
 
 var (
-	Commander *es.Commander[State, Request]
-	_         es.Command[State, Request] = CreateCurrencyState
-	_         es.Command[State, Request] = AddAmount
-	_         es.Command[State, Request] = MinusAmount
-	_         es.Command[State, Request] = ChangeStatus
-	_         es.Command[State, Request] = ChangeValue
-	_         es.Command[State, Request] = ChangeValueV2
-	_         es.Command[State, Request] = Burn
+	Processor *es.Processor[State, Request]
+	_         es.Process[State, Request] = CreateCurrencyState
+	_         es.Process[State, Request] = AddAmount
+	_         es.Process[State, Request] = MinusAmount
+	_         es.Process[State, Request] = ChangeStatus
+	_         es.Process[State, Request] = ChangeValue
+	_         es.Process[State, Request] = ChangeValueV2
+	_         es.Process[State, Request] = Burn
 )
 
 func init() {
-	// Commander 구성
-	// 정의한 모든 Event 는 Command 와 매핑되어야 함
-	Commander = es.NewCommander[State, Request]()
-	Commander.SetCommand(CreateAmountStateEvent, CreateCurrencyState)
-	Commander.SetCommand(AddAmountEvent, AddAmount)
-	Commander.SetCommand(MinusAmountEvent, MinusAmount)
-	Commander.SetCommand(ChangeStatusEvent, ChangeStatus)
-	Commander.SetCommand(ChangeValueEvent, ChangeValue)
-	Commander.SetCommand(ChangeValueV2Event, ChangeValueV2) // V2 의 Cmd 를 따로 매핑
-	Commander.SetCommand(BurnEvent, Burn)
+	// Processor 구성
+	// 정의한 모든 Event 는 Process 와 매핑되어야 함
+	Processor = es.NewProcessor[State, Request]()
+	Processor.SetProcess(CreateAmountStateEvent, CreateCurrencyState)
+	Processor.SetProcess(AddAmountEvent, AddAmount)
+	Processor.SetProcess(MinusAmountEvent, MinusAmount)
+	Processor.SetProcess(ChangeStatusEvent, ChangeStatus)
+	Processor.SetProcess(ChangeValueEvent, ChangeValue)
+	Processor.SetProcess(ChangeValueV2Event, ChangeValueV2) // V2 의 Cmd 를 따로 매핑
+	Processor.SetProcess(BurnEvent, Burn)
 }
 
 func CreateCurrencyState(s *es.State[State, Request], e *es.Event[Request]) *es.State[State, Request] {

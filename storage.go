@@ -4,7 +4,7 @@
 //
 // [Event Storage 인터페이스]
 // Event Storage 에서 Event 는 저장만 가능하고, 수정하거나 삭제할 수 없다는 원칙을 지키도록 구현한다.
-// AddEvent 가 Command 영역이 되고, 그외 필요에 따라 Event 를 Get 하는 방법이 더 늘어날 수 있다.
+// AddEvent 가 Process 영역이 되고, 그외 필요에 따라 Event 를 Get 하는 방법이 더 늘어날 수 있다.
 //
 // [CommonState Snapshot Storage 인터페이스]
 // Snapshot 은 CommonState 의 특정 상태를 의미한다. 즉, Snapshot 은 최신일 수도 있지만 과거의 CommonState 상태일 수도 있다.
@@ -19,16 +19,22 @@ package eventsourcing
 
 // EventStorage | Event 저장소의 인터페이스
 type EventStorage[R any] interface {
-	IncreaseEventNo(pk PartitionKey) (eventNo int, err error)                // atomic 하게 event 번호를 증가시켜 가져온다. pk가 처음 들어오는 것이면 1을 리턴
-	AddEvent(event *Event[R]) error                                          // event 를 저장
-	GetEvent(id EventId) (*Event[R], error)                                  // event 를 조회
-	GetEvents(pk PartitionKey) ([]*Event[R], error)                          // partition key 의 전체 event list 를 조회
-	GetEventsAfterEventNo(pk PartitionKey, eventNo int) ([]*Event[R], error) // partition key 의 eventNo 보다 큰 events 를 조회
-	GetLastEvent(pk PartitionKey) (*Event[R], error)                         // partition key 의 마지막 event 를 조회
+	IncreaseEventNo(pk PartitionKey) (eno int, err error)                // atomic 하게 event 번호를 증가시켜 가져온다. pk가 처음 들어오는 것이면 1을 리턴
+	AddEvent(e *Event[R]) error                                          // event 를 저장
+	GetEvent(id EventId) (*Event[R], error)                              // event 를 조회
+	GetEvents(pk PartitionKey) ([]*Event[R], error)                      // partition key 의 전체 event list 를 조회
+	GetEventsAfterEventNo(pk PartitionKey, eno int) ([]*Event[R], error) // partition key 의 eventNo 보다 큰 events 를 조회
+	GetLastEvent(pk PartitionKey) (*Event[R], error)                     // partition key 의 마지막 event 를 조회
 }
 
-// StateSnapshotStorage | Event Snapshot 저장소의 인터페이스
+// StateSnapshotStorage | State Snapshot 저장소의 인터페이스
 type StateSnapshotStorage[S CommonState[R], R any] interface {
 	SaveSnapshot(pk PartitionKey, state *State[S, R]) error      // PartitionKey 의 snapshot 저장
 	GetSnapshot(pk PartitionKey) (state *State[S, R], err error) // PartitionKey 로 검색하여 현재 Snapshot 조회
+}
+
+// LatestEventTypeStorage | 최근 EventType 을 저장하는 인터페이스
+type LatestEventTypeStorage interface {
+	SaveEventType(pk PartitionKey, eid *EventId, et *EventType) // PartitionKey 의 최근 eventType 을 저장
+	GetEventType(pk PartitionKey) (eid *EventId, et *EventType) // PartitionKey 의 eventType 조회
 }

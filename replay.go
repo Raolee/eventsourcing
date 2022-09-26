@@ -6,7 +6,7 @@ import (
 
 // ReplayEventsWithoutState | 첫 event 부터 replay
 func ReplayEventsWithoutState[S CommonState[R], R any](
-	commander *Commander[S, R],
+	commander *Processor[S, R],
 	init *State[S, R],
 	events ...*Event[R],
 ) (
@@ -21,7 +21,7 @@ func ReplayEventsWithoutState[S CommonState[R], R any](
 
 // ReplayEventsWithState | state 부터 event 를 적용하여 replay
 func ReplayEventsWithState[S CommonState[R], R any](
-	commander *Commander[S, R],
+	commander *Processor[S, R],
 	state *State[S, R],
 	events ...*Event[R],
 ) (
@@ -32,14 +32,14 @@ func ReplayEventsWithState[S CommonState[R], R any](
 }
 
 func replayEvents[S CommonState[R], R any](
-	commander *Commander[S, R],
+	commander *Processor[S, R],
 	state *State[S, R],
 	events ...*Event[R],
 ) (
 	*State[S, R], error,
 ) {
 	for _, e := range events {
-		cmd, ok := commander.GetCommand(*e.EventType)
+		cmd, ok := commander.GetProcess(*e.EventType)
 		if !ok {
 			return state, errors.New("not defined event")
 		}

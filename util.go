@@ -14,8 +14,8 @@ func JsonString(v any) string {
 	return string(json)
 }
 
-// panic 을 잡아주는 핸들러, err arg 에 에러를 대입한다.
-func handleError(err *error) {
+// HandleError | panic 을 잡아주는 핸들러, err arg 에 에러를 대입한다.
+func HandleError(err *error) {
 	if r := recover(); r != nil {
 		e := ConvertRecoverToError(r)
 		*err = e

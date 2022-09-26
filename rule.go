@@ -28,8 +28,8 @@ func (r *Rule) Merge(rule *Rule) {
 	}
 }
 
-// Event Sourcing 의 룰 기본 값
-func newDefaultRule() *Rule {
+// NewDefaultRule | Event Sourcing 의 룰 기본 값
+func NewDefaultRule() *Rule {
 	return &Rule{
 		AlwaysSnapshot:  ptr.Bool(false),
 		MinSnapshotTerm: ptr.Duration(1 * time.Minute),

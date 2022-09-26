@@ -51,5 +51,5 @@ type PartitionKey string
 // EventName | Event 의 이름
 type EventName string
 
-// EventVersion | Event 의 버전, Domain, EventName 이 같은데 실제 Command 가 달라야 한다면 Version 을 높인 Event를 새로 정의한다.
+// EventVersion | Event 의 버전, Domain, EventName 이 같은데 실제 Process 가 달라야 한다면 Version 을 높인 Event를 새로 정의한다.
 type EventVersion string

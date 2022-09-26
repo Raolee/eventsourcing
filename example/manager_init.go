@@ -1,9 +1,9 @@
 package example
 
 import (
-	es "eventsourcing"
 	"eventsourcing/example/currency"
 	"eventsourcing/example/storage"
+	es "eventsourcing/manager"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 func init() {
 	CurrencyEsManager = es.NewBaseManager[currency.State, currency.Request](
 		currency.Rule,
-		currency.Commander,
+		currency.Processor,
 		currency.Validator,
 		storage.NewCurrencyEventStorage(),
 		storage.NewCurrencySnapshotStorage(),

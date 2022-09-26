@@ -48,8 +48,8 @@ const (
 )
 
 var (
-	// EventCommandMap | EventName 과 Command 를 연결
-	EventCommandMap = map[eventsourcing.EventName]eventsourcing.Command{
+	// EventCommandMap | EventName 과 Process 를 연결
+	EventCommandMap = map[eventsourcing.EventName]eventsourcing.Process{
 		CreateEvent:              command.Command.Create,
 		SaveDataEvent:            command.Command.SaveData,
 		RemoveEvent:              command.Command.Remove,
